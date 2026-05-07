@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nettiautomaatti</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 13px;
+      width: 280px;
+      background: #fff;
+      color: #333;
+    }
+
+    .header {
+      background: #cc3300;
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header img {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+
+    .header h1 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      display: block;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #ddd8d2;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #333;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus { border-color: #cc3300; }
+
+    .btn-save {
+      width: 100%;
+      background: #cc3300;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-save:hover { background: #aa2900; }
+
+    .status {
+      font-size: 11px;
+      color: #27ae60;
+      text-align: center;
+      min-height: 14px;
+    }
+
+    .status--error { color: #c0392b; }
+
+    .hint {
+      font-size: 11px;
+      color: #999;
+      line-height: 1.5;
+      border-top: 1px solid #f0ede9;
+      padding-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="icons/icon48.png" alt="Nettiautomaatti">
+    <h1>Nettiautomaatti</h1>
+  </div>
+  <div class="body">
+    <div>
+      <label for="apiKey">OpenAI API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-…" autocomplete="off">
+    </div>
+    <button class="btn-save" id="saveBtn">Save Key</button>
+    <div class="status" id="saveStatus"></div>
+    <p class="hint">Avaa autoilmoitus nettiauto.fi:ssä. <strong>Analysoi</strong>-nappi ilmestyy sivulle automaattisesti.</p>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

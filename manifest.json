@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Nettiautomaatti",
+  "version": "1.0.0",
+  "description": "Open a listing on nettiauto.fi, click Analysoi. Get reliability score, common problems, and strengths for that exact car.",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "https://www.nettiauto.com/*",
+    "https://api.openai.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.nettiauto.com/*"],
+      "js": ["content.js"],
+      "css": ["panel.css"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

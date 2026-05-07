@@ -1,0 +1,11 @@
+{
+  "name": "nettiauto-analyser",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tailwindcss -i src/panel.input.css -o panel.css --minify",
+    "dev": "tailwindcss -i src/panel.input.css -o panel.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
