@@ -349,7 +349,7 @@ ${car.context}
 Return exactly:
 {
   "reliabilityScore": <integer 1-5>,
-  "summary": "<3-5 sentences in Finnish: overall reliability verdict, how the mileage and age affect it, any concrete red flags in the seller description, and whether the price seems reasonable. Do not reference NHTSA, Traficom, or any data source names.>",
+  "summary": "<3-5 sentences in Finnish: overall reliability verdict, how the mileage and age affect it, any concrete red flags in the seller description, and whether the price seems reasonable. Do not reference NHTSA, Traficom, or any data source names. Do not use em dashes (—).>",
   "commonProblems": ["<Finnish, specific to this engine/gearbox variant>", ...],
   "benefits": ["<Finnish>", ...],
   "similarCars": ["<make model year-range>", "<make model year-range>", "<make model year-range>"]
