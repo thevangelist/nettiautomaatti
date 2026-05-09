@@ -6,7 +6,9 @@
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
     "https://www.nettiauto.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "https://api.nhtsa.gov/*",
+    "https://takaisinkutsut.traficom.fi/*"
   ],
   "action": {
     "default_popup": "popup.html",

@@ -8,6 +8,79 @@ function getByXPath(xpath) {
   return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 }
 
+function extractMakeModelYear() {
+  const titleEl = document.querySelector('h1.details-page-header__item-title');
+  const full = titleEl ? titleEl.innerText.trim() : '';
+  const yearEl = document.querySelector('.details-page__item-main-info_year');
+  const year = yearEl ? (yearEl.innerText.trim().match(/\d{4}/) || [])[0] || '' : '';
+  const spaceIdx = full.indexOf(' ');
+  const make = spaceIdx > 0 ? full.slice(0, spaceIdx) : full;
+  const model = spaceIdx > 0 ? full.slice(spaceIdx + 1) : '';
+  return { make, model, year };
+}
+
+async function fetchTraficomRecalls(make, model) {
+  if (!make) return null;
+  try {
+    const res = await fetch(`https://takaisinkutsut.traficom.fi/api/recall?keyword=${encodeURIComponent(make)}`);
+    if (!res.ok) return null;
+    const d = await res.json();
+    const modelLower = model.toLowerCase();
+    const filtered = (d.itemList || []).filter(r => {
+      const models = (r.field_vehicle_models || '').toLowerCase();
+      return modelLower.length < 2 || models.includes(modelLower) || models.split(/[,\s]+/).some(m => modelLower.includes(m) && m.length > 2);
+    });
+    const items = (filtered.length > 0 ? filtered : (d.itemList || []).slice(0, 5))
+      .slice(0, 5)
+      .map(r => `${r.field_fault}: ${r.field_fault_description || ''}`);
+    return { count: d.total, items, filtered: filtered.length };
+  } catch { return null; }
+}
+
+async function fetchNHTSA(make, model, year) {
+  if (!make || !year) return null;
+  const b = 'https://api.nhtsa.gov';
+  const m = encodeURIComponent(make);
+  const mo = encodeURIComponent(model);
+  const y = encodeURIComponent(year);
+  try {
+    const [recallRes, complaintRes, tsbRes, safetyRes] = await Promise.allSettled([
+      fetch(`${b}/recalls/recallsByVehicle?make=${m}&model=${mo}&modelYear=${y}`),
+      fetch(`${b}/complaints/complaintsByVehicle?make=${m}&model=${mo}&modelYear=${y}`),
+      fetch(`${b}/tsbs/tsbsByVehicle?make=${m}&model=${mo}&modelYear=${y}`),
+      fetch(`${b}/SafetyRatings/modelyear/${y}/make/${m}/model/${mo}?format=json`),
+    ]);
+    let recalls = [], complaintCount = 0, tsbs = [], safetyRating = null;
+    if (recallRes.status === 'fulfilled' && recallRes.value.ok) {
+      const d = await recallRes.value.json();
+      recalls = (d.results || []).slice(0, 5).map(r =>
+        `${r.Component}: ${(r.Summary || '').slice(0, 100)}`
+      );
+    }
+    if (complaintRes.status === 'fulfilled' && complaintRes.value.ok) {
+      const d = await complaintRes.value.json();
+      complaintCount = d.count || 0;
+    }
+    if (tsbRes.status === 'fulfilled' && tsbRes.value.ok) {
+      const d = await tsbRes.value.json();
+      tsbs = (d.results || []).slice(0, 5).map(r =>
+        `${r.Subject || r.Category || ''}: ${(r.Summary || '').slice(0, 100)}`
+      ).filter(Boolean);
+    }
+    if (safetyRes.status === 'fulfilled' && safetyRes.value.ok) {
+      const d = await safetyRes.value.json();
+      const r = (d.Results || [])[0];
+      if (r) safetyRating = {
+        overall: r.OverallRating,
+        frontal: r.FrontCrashRating,
+        side: r.SideCrashRating,
+        rollover: r.RolloverRating,
+      };
+    }
+    return { recalls, complaintCount, tsbs, safetyRating };
+  } catch { return null; }
+}
+
 function extractCarData() {
   // Title + variant (e.g. "Mercedes-Benz C" + "220 d T Avantgarde 4Matic")
   const titleEl   = document.querySelector('h1.details-page-header__item-title');
@@ -151,8 +224,30 @@ function renderPanel(state) {
             </ul>
           </div>
 
+          ${state.nhtsa && (state.nhtsa.recalls.length > 0 || state.nhtsa.complaintCount > 0 || state.nhtsa.tsbs.length > 0 || state.nhtsa.safetyRating) ? `
           <div class="na-border-t na-border-gray-100"></div>
-          <p class="na-text-2xs na-text-gray-400">Analysoitu OpenAI:lla • Tarkista tiedot myyjältä</p>
+          <div>
+            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">NHTSA-tiedot (USA, viralliset)</p>
+            <div class="na-flex na-flex-wrap na-gap-2 na-mb-2">
+              ${state.nhtsa.recalls.length > 0 ? `<span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Takaisinkutsut: ${state.nhtsa.recalls.length} kpl</span>` : ''}
+              ${state.nhtsa.complaintCount > 0 ? `<span class="na-text-xs na-bg-amber-50 na-text-amber-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Valitukset: ${state.nhtsa.complaintCount} kpl</span>` : ''}
+              ${state.nhtsa.tsbs.length > 0 ? `<span class="na-text-xs na-bg-blue-50 na-text-blue-700 na-rounded na-px-2 na-py-0.5 na-font-medium">TSB-tiedotteet: ${state.nhtsa.tsbs.length} kpl</span>` : ''}
+              ${state.nhtsa.safetyRating ? `<span class="na-text-xs na-bg-green-50 na-text-green-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Turvallisuus: ${state.nhtsa.safetyRating.overall}/5 ★</span>` : ''}
+            </div>
+            ${state.nhtsa.recalls.length > 0 ? `<ul class="na-flex na-flex-col na-gap-1 na-mb-1">${state.nhtsa.recalls.map(r => `<li class="na-text-2xs na-text-gray-500 na-leading-snug">🔴 ${escHtml(r)}</li>`).join('')}</ul>` : ''}
+            ${state.nhtsa.tsbs.length > 0 ? `<ul class="na-flex na-flex-col na-gap-1">${state.nhtsa.tsbs.map(t => `<li class="na-text-2xs na-text-gray-500 na-leading-snug">🔵 ${escHtml(t)}</li>`).join('')}</ul>` : ''}
+          </div>
+          ` : ''}
+          ${state.traficom && state.traficom.filtered > 0 ? `
+          <div class="na-border-t na-border-gray-100"></div>
+          <div>
+            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">Traficom takaisinkutsut (Suomi)</p>
+            <span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium na-mb-2 na-inline-block">${state.traficom.filtered} kampanjaa</span>
+            <ul class="na-flex na-flex-col na-gap-1 na-mt-1">${state.traficom.items.map(t => `<li class="na-text-2xs na-text-gray-500 na-leading-snug">🔴 ${escHtml(t)}</li>`).join('')}</ul>
+          </div>
+          ` : ''}
+          <div class="na-border-t na-border-gray-100"></div>
+          <p class="na-text-2xs na-text-gray-400">Analysoitu OpenAI:lla • NHTSA • Traficom • Tarkista tiedot myyjältä</p>
         </div>
       </div>`;
   }
@@ -197,13 +292,40 @@ async function analyse() {
   }
 
   const car = extractCarData();
+  const { make, model, year } = extractMakeModelYear();
   renderPanel({ type: 'loading', carTitle: car.title });
+
+  const [nhtsa, traficom] = await Promise.all([
+    Promise.race([fetchNHTSA(make, model, year), new Promise(r => setTimeout(() => r(null), 6000))]),
+    Promise.race([fetchTraficomRecalls(make, model), new Promise(r => setTimeout(() => r(null), 6000))]),
+  ]);
+
+  let externalContext = '';
+  if (nhtsa) {
+    if (nhtsa.recalls.length > 0)
+      externalContext += `\nNHTSA recall campaigns (USA, official): ${nhtsa.recalls.join(' | ')}`;
+    if (nhtsa.complaintCount > 0)
+      externalContext += `\nNHTSA registered complaints for this model year: ${nhtsa.complaintCount}`;
+    if (nhtsa.tsbs.length > 0)
+      externalContext += `\nNHTSA Technical Service Bulletins (known issues acknowledged by manufacturer): ${nhtsa.tsbs.join(' | ')}`;
+    if (nhtsa.safetyRating)
+      externalContext += `\nNHTSA Safety Ratings: Overall ${nhtsa.safetyRating.overall}/5, Frontal ${nhtsa.safetyRating.frontal}/5, Side ${nhtsa.safetyRating.side}/5, Rollover ${nhtsa.safetyRating.rollover}/5`;
+  }
+  if (traficom) {
+    if (traficom.filtered > 0)
+      externalContext += `\nTraficom (Finland) recall campaigns for this model (${traficom.filtered} kpl): ${traficom.items.join(' | ')}`;
+    else if (traficom.count > 0)
+      externalContext += `\nTraficom (Finland) recall campaigns for ${make}: ${traficom.count} total campaigns for this brand`;
+  }
 
   const prompt = `You are an automotive expert. Analyse this Finnish car listing and respond with JSON only (no markdown).
 
 Use ALL available data: engine size, mileage, year, fuel type, CO2 emissions, consumption, transmission, and any other specs present. Factor high mileage, age, and specific engine variants into the reliability score.
 
+IMPORTANT: The seller description is written by the seller and should be read critically — it is marketing text and may downplay problems, exaggerate condition, or omit important issues. Note any red flags or suspiciously positive framing in the summary.
+
 For commonProblems and benefits, return between 1 and 7 items each — only as many as are genuinely relevant for this exact car.
+${externalContext ? `\nExternal data from official sources:${externalContext}` : ''}
 
 Title: ${car.title}
 Listing data:
@@ -212,7 +334,7 @@ ${car.context}
 Return exactly:
 {
   "reliabilityScore": <integer 1-5>,
-  "summary": "<3-5 sentences in Finnish: overall reliability verdict, how the mileage and age affect it, anything notable about the seller description or condition, and whether the price seems reasonable for what it is>",
+  "summary": "<3-5 sentences in Finnish: overall reliability verdict, how the mileage and age affect it, any red flags or suspicious phrasing in the seller description, and whether the price seems reasonable for what it is>",
   "commonProblems": ["<Finnish, specific to this engine/gearbox variant>", ...],
   "benefits": ["<Finnish>", ...],
   "similarCars": ["<make model year-range>", "<make model year-range>", "<make model year-range>"]
@@ -240,7 +362,7 @@ Return exactly:
 
     const json = await res.json();
     const data = JSON.parse(json.choices?.[0]?.message?.content || '{}');
-    renderPanel({ type: 'result', carTitle: car.title, data });
+    renderPanel({ type: 'result', carTitle: car.title, data, nhtsa, traficom });
   } catch (e) {
     renderPanel({ type: 'error', message: e.message });
   }
