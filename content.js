@@ -19,6 +19,16 @@ function extractRegNumber() {
   return null;
 }
 
+function bgFetch(url) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({ action: 'fetch', url }, (res) => {
+      if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+      else if (res?.ok) resolve(res.data);
+      else reject(new Error(res?.error || 'fetch failed'));
+    });
+  });
+}
+
 function extractMakeModelYear() {
   const titleEl = document.querySelector('h1.details-page-header__item-title');
   const full = titleEl ? titleEl.innerText.trim() : '';
@@ -33,9 +43,7 @@ function extractMakeModelYear() {
 async function fetchTraficomRecalls(make, model) {
   if (!make) return null;
   try {
-    const res = await fetch(`https://takaisinkutsut.traficom.fi/api/recall?keyword=${encodeURIComponent(make)}`);
-    if (!res.ok) return null;
-    const d = await res.json();
+    const d = await bgFetch(`https://takaisinkutsut.traficom.fi/api/recall?keyword=${encodeURIComponent(make)}`);
     const modelLower = model.toLowerCase();
     // Only filter by model if name is long enough to be meaningful
     const useModelFilter = modelLower.length >= 3;
@@ -60,13 +68,12 @@ async function fetchNHTSA(make, model, year) {
   const mo = encodeURIComponent(model);
   const y = encodeURIComponent(year);
   try {
-    const [recallRes, complaintRes, tsbRes, safetyRes] = await Promise.allSettled([
+    const [recallRes, complaintRes, safetyRes] = await Promise.allSettled([
       fetch(`${b}/recalls/recallsByVehicle?make=${m}&model=${mo}&modelYear=${y}`),
       fetch(`${b}/complaints/complaintsByVehicle?make=${m}&model=${mo}&modelYear=${y}`),
-      fetch(`${b}/tsbs/tsbsByVehicle?make=${m}&model=${mo}&modelYear=${y}`),
       fetch(`${b}/SafetyRatings/modelyear/${y}/make/${m}/model/${mo}?format=json`),
     ]);
-    let recalls = [], complaintCount = 0, tsbs = [], safetyRating = null;
+    let recalls = [], complaintCount = 0, safetyRating = null;
     if (recallRes.status === 'fulfilled' && recallRes.value.ok) {
       const d = await recallRes.value.json();
       recalls = (d.results || []).slice(0, 5).map(r =>
@@ -77,13 +84,7 @@ async function fetchNHTSA(make, model, year) {
       const d = await complaintRes.value.json();
       complaintCount = d.count || 0;
     }
-    if (tsbRes.status === 'fulfilled' && tsbRes.value.ok) {
-      const d = await tsbRes.value.json();
-      tsbs = (d.results || []).slice(0, 5).map(r =>
-        `${r.Subject || r.Category || ''}: ${(r.Summary || '').slice(0, 100)}`
-      ).filter(Boolean);
-    }
-    if (safetyRes.status === 'fulfilled' && safetyRes.value.ok) {
+if (safetyRes.status === 'fulfilled' && safetyRes.value.ok) {
       const d = await safetyRes.value.json();
       const vehicleId = (d.Results || [])[0]?.VehicleId;
       if (vehicleId) {
@@ -100,7 +101,7 @@ async function fetchNHTSA(make, model, year) {
         }
       }
     }
-    return { recalls, complaintCount, tsbs, safetyRating };
+    return { recalls, complaintCount, safetyRating };
   } catch { return null; }
 }
 
@@ -247,14 +248,13 @@ function renderPanel(state) {
             </ul>
           </div>
 
-          ${state.nhtsa && (state.nhtsa.recalls.length > 0 || state.nhtsa.complaintCount > 0 || state.nhtsa.tsbs.length > 0 || state.nhtsa.safetyRating) ? `
+          ${state.nhtsa && (state.nhtsa.recalls.length > 0 || state.nhtsa.complaintCount > 0 || state.nhtsa.safetyRating) ? `
           <div class="na-border-t na-border-gray-100"></div>
           <div>
             <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">NHTSA (USA)</p>
             <div class="na-flex na-flex-wrap na-gap-2">
               ${state.nhtsa.recalls.length > 0 ? `<span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Takaisinkutsut: ${state.nhtsa.recalls.length} kpl</span>` : ''}
               ${state.nhtsa.complaintCount > 0 ? `<span class="na-text-xs na-bg-amber-50 na-text-amber-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Valitukset: ${state.nhtsa.complaintCount} kpl</span>` : ''}
-              ${state.nhtsa.tsbs.length > 0 ? `<span class="na-text-xs na-bg-blue-50 na-text-blue-700 na-rounded na-px-2 na-py-0.5 na-font-medium">TSB: ${state.nhtsa.tsbs.length} kpl</span>` : ''}
               ${state.nhtsa.safetyRating ? `<span class="na-text-xs na-bg-green-50 na-text-green-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Turvallisuus: ${state.nhtsa.safetyRating.overall}/5 ★</span>` : ''}
             </div>
           </div>
@@ -328,9 +328,7 @@ async function analyse() {
       externalContext += `\nNHTSA recall campaigns (USA, official): ${nhtsa.recalls.join(' | ')}`;
     if (nhtsa.complaintCount > 0)
       externalContext += `\nNHTSA registered complaints for this model year: ${nhtsa.complaintCount}`;
-    if (nhtsa.tsbs.length > 0)
-      externalContext += `\nNHTSA Technical Service Bulletins (known issues acknowledged by manufacturer): ${nhtsa.tsbs.join(' | ')}`;
-    if (nhtsa.safetyRating)
+if (nhtsa.safetyRating)
       externalContext += `\nNHTSA Safety Ratings: Overall ${nhtsa.safetyRating.overall}/5, Frontal ${nhtsa.safetyRating.frontal}/5, Side ${nhtsa.safetyRating.side}/5, Rollover ${nhtsa.safetyRating.rollover}/5`;
   }
   if (traficom) {
