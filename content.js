@@ -26,14 +26,19 @@ async function fetchTraficomRecalls(make, model) {
     if (!res.ok) return null;
     const d = await res.json();
     const modelLower = model.toLowerCase();
-    const filtered = (d.itemList || []).filter(r => {
-      const models = (r.field_vehicle_models || '').toLowerCase();
-      return modelLower.length < 2 || models.includes(modelLower) || models.split(/[,\s]+/).some(m => modelLower.includes(m) && m.length > 2);
-    });
-    const items = (filtered.length > 0 ? filtered : (d.itemList || []).slice(0, 5))
-      .slice(0, 5)
-      .map(r => `${r.field_fault}: ${r.field_fault_description || ''}`);
-    return { count: d.total, items, filtered: filtered.length };
+    // Only filter by model if name is long enough to be meaningful
+    const useModelFilter = modelLower.length >= 3;
+    const filtered = useModelFilter
+      ? (d.itemList || []).filter(r => {
+          const models = (r.field_vehicle_models || '').toLowerCase();
+          return models.includes(modelLower) ||
+            modelLower.split(/[\s-]+/).filter(p => p.length >= 3).some(p => models.includes(p));
+        })
+      : [];
+    // Only show results if model filter found something — never fall back to unrelated models
+    if (filtered.length === 0) return { count: 0, items: [], filtered: 0 };
+    const items = filtered.slice(0, 5).map(r => `${r.field_fault}: ${r.field_fault_description || ''}`);
+    return { count: filtered.length, items, filtered: filtered.length };
   } catch { return null; }
 }
 
@@ -314,8 +319,6 @@ async function analyse() {
   if (traficom) {
     if (traficom.filtered > 0)
       externalContext += `\nTraficom (Finland) recall campaigns for this model (${traficom.filtered} kpl): ${traficom.items.join(' | ')}`;
-    else if (traficom.count > 0)
-      externalContext += `\nTraficom (Finland) recall campaigns for ${make}: ${traficom.count} total campaigns for this brand`;
   }
 
   const prompt = `You are an automotive expert. Analyse this Finnish car listing and respond with JSON only (no markdown).
