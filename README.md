@@ -13,7 +13,7 @@ Costs fractions of a cent per analysis.
 - Reliability score, summary, known problems and strengths for the exact engine and gearbox variant
 - **NHTSA data** (USA, free, no key): official recall count, complaint count, and crash safety rating pulled live for the model year
 - **Traficom data** (Finland, free, no key): recall campaign count for the model, with the listing's registration number ready to paste into takaisinkutsut.traficom.fi for a VIN-level check
-- Seller description read critically — the AI flags concrete red flags instead of taking the marketing text at face value
+- Seller description read critically: the AI flags concrete red flags instead of taking the marketing text at face value
 
 ---
 
@@ -40,7 +40,7 @@ You need an OpenAI account. Get a key at [platform.openai.com](https://platform.
 
 ## How it works
 
-Scrapes the listing DOM — title, specs, mileage, engine, transmission, seller notes, all of it. Fetches NHTSA and Traficom recall data in parallel (via background service worker to bypass CORS). Builds a prompt with all of it. Sends to gpt-4o-mini. Renders in a panel injected into the page.
+Scrapes the listing DOM (title, specs, mileage, engine, transmission, seller notes) and fetches NHTSA and Traficom recall data in parallel via background service worker. Builds a prompt with all of it. Sends to gpt-4o-mini. Renders in a panel injected into the page. Fetches NHTSA and Traficom recall data in parallel (via background service worker to bypass CORS). Builds a prompt with all of it. Sends to gpt-4o-mini. Renders in a panel injected into the page.
 
 The Analysoi button sits next to Jaa and Vertaa in the toolbar. No popup, no new tab.
 
