@@ -330,7 +330,7 @@ async function analyse() {
 
 Use ALL available data: engine size, mileage, year, fuel type, CO2 emissions, consumption, transmission, and any other specs present. Factor high mileage, age, and specific engine variants into the reliability score.
 
-IMPORTANT: The seller description is written by the seller and should be read critically — it is marketing text and may downplay problems, exaggerate condition, or omit important issues. Note any red flags or suspiciously positive framing in the summary.
+The seller description is marketing text — read it critically and flag concrete red flags only if genuinely suspicious (e.g. inconsistent mileage, vague accident history, pressure tactics). Do not mention the absence of problems as a red flag.
 
 For commonProblems and benefits, return between 1 and 7 items each — only as many as are genuinely relevant for this exact car.
 ${externalContext ? `\nExternal data from official sources:${externalContext}` : ''}
@@ -342,7 +342,7 @@ ${car.context}
 Return exactly:
 {
   "reliabilityScore": <integer 1-5>,
-  "summary": "<3-5 sentences in Finnish: overall reliability verdict, how the mileage and age affect it, any red flags or suspicious phrasing in the seller description, and whether the price seems reasonable for what it is>",
+  "summary": "<3-5 sentences in Finnish: overall reliability verdict, how the mileage and age affect it, any concrete red flags in the seller description, and whether the price seems reasonable. Do not reference NHTSA, Traficom, or any data source names.>",
   "commonProblems": ["<Finnish, specific to this engine/gearbox variant>", ...],
   "benefits": ["<Finnish>", ...],
   "similarCars": ["<make model year-range>", "<make model year-range>", "<make model year-range>"]
