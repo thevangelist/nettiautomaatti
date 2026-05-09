@@ -239,15 +239,13 @@ function renderPanel(state) {
           ${state.nhtsa && (state.nhtsa.recalls.length > 0 || state.nhtsa.complaintCount > 0 || state.nhtsa.tsbs.length > 0 || state.nhtsa.safetyRating) ? `
           <div class="na-border-t na-border-gray-100"></div>
           <div>
-            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">NHTSA-tiedot (USA, viralliset)</p>
-            <div class="na-flex na-flex-wrap na-gap-2 na-mb-2">
+            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">NHTSA (USA)</p>
+            <div class="na-flex na-flex-wrap na-gap-2">
               ${state.nhtsa.recalls.length > 0 ? `<span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Takaisinkutsut: ${state.nhtsa.recalls.length} kpl</span>` : ''}
               ${state.nhtsa.complaintCount > 0 ? `<span class="na-text-xs na-bg-amber-50 na-text-amber-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Valitukset: ${state.nhtsa.complaintCount} kpl</span>` : ''}
-              ${state.nhtsa.tsbs.length > 0 ? `<span class="na-text-xs na-bg-blue-50 na-text-blue-700 na-rounded na-px-2 na-py-0.5 na-font-medium">TSB-tiedotteet: ${state.nhtsa.tsbs.length} kpl</span>` : ''}
+              ${state.nhtsa.tsbs.length > 0 ? `<span class="na-text-xs na-bg-blue-50 na-text-blue-700 na-rounded na-px-2 na-py-0.5 na-font-medium">TSB: ${state.nhtsa.tsbs.length} kpl</span>` : ''}
               ${state.nhtsa.safetyRating ? `<span class="na-text-xs na-bg-green-50 na-text-green-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Turvallisuus: ${state.nhtsa.safetyRating.overall}/5 ★</span>` : ''}
             </div>
-            ${state.nhtsa.recalls.length > 0 ? `<ul class="na-flex na-flex-col na-gap-1 na-mb-1">${state.nhtsa.recalls.map(r => `<li class="na-text-2xs na-text-gray-500 na-leading-snug">🔴 ${escHtml(r)}</li>`).join('')}</ul>` : ''}
-            ${state.nhtsa.tsbs.length > 0 ? `<ul class="na-flex na-flex-col na-gap-1">${state.nhtsa.tsbs.map(t => `<li class="na-text-2xs na-text-gray-500 na-leading-snug">🔵 ${escHtml(t)}</li>`).join('')}</ul>` : ''}
           </div>
           ` : ''}
           ${state.traficom && state.traficom.filtered > 0 ? `
