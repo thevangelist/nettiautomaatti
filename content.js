@@ -74,13 +74,20 @@ async function fetchNHTSA(make, model, year) {
     }
     if (safetyRes.status === 'fulfilled' && safetyRes.value.ok) {
       const d = await safetyRes.value.json();
-      const r = (d.Results || [])[0];
-      if (r) safetyRating = {
-        overall: r.OverallRating,
-        frontal: r.FrontCrashRating,
-        side: r.SideCrashRating,
-        rollover: r.RolloverRating,
-      };
+      const vehicleId = (d.Results || [])[0]?.VehicleId;
+      if (vehicleId) {
+        const ratingRes = await fetch(`${b}/SafetyRatings/VehicleId/${vehicleId}?format=json`).catch(() => null);
+        if (ratingRes?.ok) {
+          const rd = await ratingRes.json();
+          const r = (rd.Results || [])[0];
+          if (r?.OverallRating && r.OverallRating !== 'Not Rated') safetyRating = {
+            overall: r.OverallRating,
+            frontal: r.OverallFrontCrashRating,
+            side: r.OverallSideCrashRating,
+            rollover: r.RolloverRating,
+          };
+        }
+      }
     }
     return { recalls, complaintCount, tsbs, safetyRating };
   } catch { return null; }
