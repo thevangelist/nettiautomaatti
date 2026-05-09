@@ -247,9 +247,8 @@ function renderPanel(state) {
           <div class="na-border-t na-border-gray-100"></div>
           <div>
             <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">Traficom takaisinkutsut (Suomi)</p>
-            <span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium na-mb-2 na-inline-block">${state.traficom.filtered} kampanjaa tälle mallille</span>
-            <ul class="na-flex na-flex-col na-gap-1 na-mt-1 na-mb-2">${state.traficom.items.map(t => `<li class="na-text-2xs na-text-gray-500 na-leading-snug">🔴 ${escHtml(t)}</li>`).join('')}</ul>
-            <p class="na-text-2xs na-text-gray-400 na-leading-snug">⚠️ Takaisinkutsu koskee tiettyä yksilöä valmistusnumeron perusteella — tarkista <a href="https://takaisinkutsut.traficom.fi" target="_blank" class="na-underline">takaisinkutsut.traficom.fi</a> koskeeko juuri tämä auto.</p>
+            <span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium na-inline-block">${state.traficom.filtered} takaisinkutsukampanjaa</span>
+            <p class="na-text-2xs na-text-gray-400 na-leading-snug na-mt-2">Tarkista VIN-numerolla koskeeko juuri tämä auto: <a href="https://takaisinkutsut.traficom.fi" target="_blank" class="na-underline">takaisinkutsut.traficom.fi</a></p>
           </div>
           ` : ''}
           <div class="na-border-t na-border-gray-100"></div>
