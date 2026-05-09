@@ -8,6 +8,17 @@ function getByXPath(xpath) {
   return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 }
 
+function extractRegNumber() {
+  const boxes = [...document.querySelectorAll('.vehicle-info-box')];
+  for (const box of boxes) {
+    const label = box.querySelector('.vehicle-info-box__vehicle-info')?.innerText.trim().toLowerCase() || '';
+    if (label.includes('rekisteri')) {
+      return box.querySelector('.vehicle-info-box__vehicle-det')?.innerText.trim() || null;
+    }
+  }
+  return null;
+}
+
 function extractMakeModelYear() {
   const titleEl = document.querySelector('h1.details-page-header__item-title');
   const full = titleEl ? titleEl.innerText.trim() : '';
@@ -253,7 +264,7 @@ function renderPanel(state) {
           <div>
             <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">Traficom takaisinkutsut (Suomi)</p>
             <span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium na-inline-block">${state.traficom.filtered} takaisinkutsukampanjaa</span>
-            <p class="na-text-2xs na-text-gray-400 na-leading-snug na-mt-2">Tarkista VIN-numerolla koskeeko juuri tämä auto: <a href="https://takaisinkutsut.traficom.fi" target="_blank" class="na-underline">takaisinkutsut.traficom.fi</a></p>
+            <p class="na-text-2xs na-text-gray-400 na-leading-snug na-mt-2">Tarkista koskeeko juuri tämä auto: <a href="https://takaisinkutsut.traficom.fi" target="_blank" class="na-underline">takaisinkutsut.traficom.fi</a>${state.regNumber ? ` — käytä rekisterinumeroa <strong class="na-text-gray-600 na-select-all">${escHtml(state.regNumber)}</strong>` : ''}</p>
           </div>
           ` : ''}
           <div class="na-border-t na-border-gray-100"></div>
@@ -303,6 +314,7 @@ async function analyse() {
 
   const car = extractCarData();
   const { make, model, year } = extractMakeModelYear();
+  const regNumber = extractRegNumber();
   renderPanel({ type: 'loading', carTitle: car.title });
 
   const [nhtsa, traficom] = await Promise.all([
@@ -370,7 +382,7 @@ Return exactly:
 
     const json = await res.json();
     const data = JSON.parse(json.choices?.[0]?.message?.content || '{}');
-    renderPanel({ type: 'result', carTitle: car.title, data, nhtsa, traficom });
+    renderPanel({ type: 'result', carTitle: car.title, data, nhtsa, traficom, regNumber });
   } catch (e) {
     renderPanel({ type: 'error', message: e.message });
   }
