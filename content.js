@@ -261,7 +261,7 @@ function renderPanel(state) {
           ${state.traficom && state.traficom.filtered > 0 ? `
           <div class="na-border-t na-border-gray-100"></div>
           <div>
-            <p class="na-text-2xs na-text-gray-500 na-leading-snug"><span class="na-font-medium na-text-red-700">${state.traficom.filtered} takaisinkutsua</span> — <a href="https://takaisinkutsut.traficom.fi" target="_blank" class="na-underline">tarkista</a>${state.regNumber ? ` rekisterinumerolla <strong class="na-select-all">${escHtml(state.regNumber)}</strong>` : ''}</p>
+            <p class="na-text-2xs na-text-gray-500 na-leading-snug"><span class="na-font-medium na-text-red-700">${state.traficom.filtered} takaisinkutsua</span> — <a href="https://takaisinkutsut.traficom.fi" target="_blank" class="na-underline">tarkista</a>${state.regNumber ? ` (${escHtml(state.regNumber)})` : ''}</p>
           </div>
           ` : ''}
           <div class="na-border-t na-border-gray-100"></div>
