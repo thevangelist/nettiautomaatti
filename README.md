@@ -17,16 +17,6 @@ Costs fractions of a cent per analysis.
 
 ---
 
-## Stack
-
-- Chrome Extension MV3
-- OpenAI gpt-4o-mini
-- NHTSA API + Traficom API (both free, no keys needed)
-- Tailwind CSS (prefixed, no collisions)
-- Zero dependencies at runtime
-
----
-
 ## Setup
 
 1. Clone the repo
