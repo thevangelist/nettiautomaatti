@@ -54,7 +54,8 @@
       letter-spacing: 0.04em;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       border: 1px solid #ddd8d2;
       border-radius: 6px;
@@ -66,7 +67,8 @@
       transition: border-color 0.15s;
     }
 
-    input:focus { border-color: #cc3300; }
+    input:focus,
+    select:focus { border-color: #cc3300; }
 
     .btn-save {
       width: 100%;
@@ -112,7 +114,14 @@
       <label for="apiKey">OpenAI API Key</label>
       <input type="password" id="apiKey" placeholder="sk-…" autocomplete="off">
     </div>
-    <button class="btn-save" id="saveBtn">Save Key</button>
+    <div>
+      <label for="responseLanguage">Response Language</label>
+      <select id="responseLanguage">
+        <option value="English">English</option>
+        <option value="Finnish">Finnish</option>
+      </select>
+    </div>
+    <button class="btn-save" id="saveBtn">Save Settings</button>
     <div class="status" id="saveStatus"></div>
     <p class="hint">Avaa autoilmoitus nettiauto.fi:ssä. <strong>Analysoi</strong>-nappi ilmestyy sivulle automaattisesti.</p>
   </div>

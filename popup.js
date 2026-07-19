@@ -1,9 +1,11 @@
 const apiKeyInput = document.getElementById('apiKey');
+const responseLanguageSelect = document.getElementById('responseLanguage');
 const saveBtn = document.getElementById('saveBtn');
 const saveStatus = document.getElementById('saveStatus');
 
-chrome.storage.sync.get('openaiKey', ({ openaiKey }) => {
+chrome.storage.sync.get(['openaiKey', 'responseLanguage'], ({ openaiKey, responseLanguage }) => {
   if (openaiKey) apiKeyInput.value = openaiKey;
+  responseLanguageSelect.value = responseLanguage || 'Finnish';
 });
 
 saveBtn.addEventListener('click', () => {
@@ -12,11 +14,10 @@ saveBtn.addEventListener('click', () => {
     showStatus(saveStatus, 'Invalid key format', true);
     return;
   }
-  chrome.storage.sync.set({ openaiKey: key }, () => {
-    showStatus(saveStatus, 'Key saved ✓');
+  chrome.storage.sync.set({ openaiKey: key, responseLanguage: responseLanguageSelect.value }, () => {
+    showStatus(saveStatus, 'Settings saved');
   });
 });
-
 
 function showStatus(el, msg, isError = false) {
   el.textContent = msg;

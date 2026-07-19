@@ -3,6 +3,41 @@ const ICON_PLUS   = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 const ICON_MINUS  = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="na-w-3.5 na-h-3.5 na-shrink-0 na-mt-px"><path d="M5 12h14"/></svg>`;
 
 const PANEL_ID = 'nettiauto-analyser-panel';
+const DEFAULT_RESPONSE_LANGUAGE = 'Finnish';
+const SUPPORTED_RESPONSE_LANGUAGES = new Set(['English', 'Finnish']);
+
+const UI_TEXT = {
+  English: {
+    loading: 'Analysing...',
+    missingKey: 'No API key set.',
+    missingKeyHelp: 'Set your OpenAI API key in the extension settings.',
+    commonProblems: 'Common problems',
+    benefits: 'Strengths',
+    similarCars: 'Similar cars',
+    recalls: 'Recalls',
+    complaints: 'Complaints',
+    safety: 'Safety',
+    check: 'check',
+    analysedWith: 'Analysed with OpenAI, NHTSA, and Traficom. Verify details with the seller.',
+  },
+  Finnish: {
+    loading: 'Analysoidaan...',
+    missingKey: 'Ei API-avainta asetettu.',
+    missingKeyHelp: 'Aseta OpenAI API-avain laajennuksen asetuksissa.',
+    commonProblems: 'Tyypilliset ongelmat',
+    benefits: 'Vahvuudet',
+    similarCars: 'Samankaltaiset autot',
+    recalls: 'Takaisinkutsut',
+    complaints: 'Valitukset',
+    safety: 'Turvallisuus',
+    check: 'tarkista',
+    analysedWith: 'Analysoitu OpenAI:lla, NHTSA:lla ja Traficomilla. Tarkista tiedot myyjältä.',
+  },
+};
+
+function normalizeResponseLanguage(language) {
+  return SUPPORTED_RESPONSE_LANGUAGES.has(language) ? language : DEFAULT_RESPONSE_LANGUAGE;
+}
 
 function getByXPath(xpath) {
   return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -181,6 +216,8 @@ function getPanel() {
 
 function renderPanel(state) {
   const el = getPanel();
+  const responseLanguage = normalizeResponseLanguage(state.responseLanguage);
+  const ui = UI_TEXT[responseLanguage];
 
   if (state.type === 'loading') {
     el.innerHTML = `
@@ -188,7 +225,7 @@ function renderPanel(state) {
         ${headerHTML()}
         <div class="na-flex na-flex-col na-items-center na-justify-center na-gap-3 na-py-10 na-px-4">
           <div class="na-w-6 na-h-6 na-rounded-full na-border-2 na-border-gray-200 na-border-t-brand na-animate-spin"></div>
-          <p class="na-text-sm na-text-gray-500">Analysoidaan…</p>
+          <p class="na-text-sm na-text-gray-500">${escHtml(ui.loading)}</p>
         </div>
       </div>`;
   }
@@ -214,7 +251,7 @@ function renderPanel(state) {
 
           <!-- Problems -->
           <div>
-            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">Tyypilliset ongelmat</p>
+            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">${escHtml(ui.commonProblems)}</p>
             <ul class="na-flex na-flex-col na-gap-2">
               ${(d.commonProblems || []).map(p => `
                 <li class="na-flex na-items-start na-gap-2 na-text-sm na-text-gray-600">
@@ -227,7 +264,7 @@ function renderPanel(state) {
 
           <!-- Benefits -->
           <div>
-            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">Vahvuudet</p>
+            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">${escHtml(ui.benefits)}</p>
             <ul class="na-flex na-flex-col na-gap-2">
               ${(d.benefits || []).map(b => `
                 <li class="na-flex na-items-start na-gap-2 na-text-sm na-text-gray-600">
@@ -240,7 +277,7 @@ function renderPanel(state) {
 
           <!-- Similar cars -->
           <div>
-            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">Samankaltaiset autot</p>
+            <p class="na-text-sm na-font-bold na-text-gray-800 na-mb-2">${escHtml(ui.similarCars)}</p>
             <ul class="na-flex na-flex-col na-gap-2">
               ${(d.similarCars || []).map(c => `
                 <li class="na-text-sm na-text-gray-600 na-list-disc na-ml-4">${escHtml(c)}</li>
@@ -252,20 +289,20 @@ function renderPanel(state) {
           <div class="na-border-t na-border-gray-100"></div>
           <div>
             <div class="na-flex na-flex-wrap na-gap-2">
-              ${state.nhtsa.recalls.length > 0 ? `<span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Takaisinkutsut: ${state.nhtsa.recalls.length} kpl</span>` : ''}
-              ${state.nhtsa.complaintCount > 0 ? `<span class="na-text-xs na-bg-amber-50 na-text-amber-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Valitukset: ${state.nhtsa.complaintCount} kpl</span>` : ''}
-              ${state.nhtsa.safetyRating ? `<span class="na-text-xs na-bg-green-50 na-text-green-700 na-rounded na-px-2 na-py-0.5 na-font-medium">Turvallisuus: ${state.nhtsa.safetyRating.overall}/5 ★</span>` : ''}
+              ${state.nhtsa.recalls.length > 0 ? `<span class="na-text-xs na-bg-red-50 na-text-red-700 na-rounded na-px-2 na-py-0.5 na-font-medium">${escHtml(ui.recalls)}: ${state.nhtsa.recalls.length}</span>` : ''}
+              ${state.nhtsa.complaintCount > 0 ? `<span class="na-text-xs na-bg-amber-50 na-text-amber-700 na-rounded na-px-2 na-py-0.5 na-font-medium">${escHtml(ui.complaints)}: ${state.nhtsa.complaintCount}</span>` : ''}
+              ${state.nhtsa.safetyRating ? `<span class="na-text-xs na-bg-green-50 na-text-green-700 na-rounded na-px-2 na-py-0.5 na-font-medium">${escHtml(ui.safety)}: ${state.nhtsa.safetyRating.overall}/5</span>` : ''}
             </div>
           </div>
           ` : ''}
           ${state.traficom && state.traficom.filtered > 0 ? `
           <div class="na-border-t na-border-gray-100"></div>
           <div>
-            <p class="na-text-2xs na-text-gray-500 na-leading-snug"><span class="na-font-medium na-text-red-700">${state.traficom.filtered} takaisinkutsua</span> — <a href="https://takaisinkutsut.traficom.fi" target="_blank" class="na-underline">tarkista</a>${state.regNumber ? ` (${escHtml(state.regNumber)})` : ''}</p>
+            <p class="na-text-2xs na-text-gray-500 na-leading-snug"><span class="na-font-medium na-text-red-700">${state.traficom.filtered} ${escHtml(ui.recalls.toLowerCase())}</span> - <a href="https://takaisinkutsut.traficom.fi" target="_blank" class="na-underline">${escHtml(ui.check)}</a>${state.regNumber ? ` (${escHtml(state.regNumber)})` : ''}</p>
           </div>
           ` : ''}
           <div class="na-border-t na-border-gray-100"></div>
-          <p class="na-text-2xs na-text-gray-400">Analysoitu OpenAI:lla • NHTSA • Traficom • Tarkista tiedot myyjältä</p>
+          <p class="na-text-2xs na-text-gray-400">${escHtml(ui.analysedWith)}</p>
         </div>
       </div>`;
   }
@@ -276,7 +313,7 @@ function renderPanel(state) {
         ${headerHTML()}
         <div class="na-p-4 na-flex na-flex-col na-gap-1.5">
           <p class="na-text-sm na-text-gray-800">${escHtml(state.message)}</p>
-          ${state.needsKey ? `<p class="na-text-xs na-text-gray-400">Aseta OpenAI API-avain laajennuksen asetuksissa.</p>` : ''}
+          ${state.needsKey ? `<p class="na-text-xs na-text-gray-400">${escHtml(ui.missingKeyHelp)}</p>` : ''}
         </div>
       </div>`;
   }
@@ -303,16 +340,17 @@ function escHtml(str) {
 }
 
 async function analyse() {
-  const { openaiKey } = await chrome.storage.sync.get('openaiKey');
+  const { openaiKey, responseLanguage: storedResponseLanguage } = await chrome.storage.sync.get(['openaiKey', 'responseLanguage']);
+  const responseLanguage = normalizeResponseLanguage(storedResponseLanguage);
   if (!openaiKey) {
-    renderPanel({ type: 'error', message: 'Ei API-avainta asetettu.', needsKey: true });
+    renderPanel({ type: 'error', message: UI_TEXT[responseLanguage].missingKey, needsKey: true, responseLanguage });
     return;
   }
 
   const car = extractCarData();
   const { make, model, year } = extractMakeModelYear();
   const regNumber = extractRegNumber();
-  renderPanel({ type: 'loading', carTitle: car.title });
+  renderPanel({ type: 'loading', carTitle: car.title, responseLanguage });
 
   const [nhtsa, traficom] = await Promise.all([
     Promise.race([fetchNHTSA(make, model, year), new Promise(r => setTimeout(() => r(null), 6000))]),
@@ -333,7 +371,7 @@ if (nhtsa.safetyRating)
       externalContext += `\nTraficom (Finland) recall campaigns for this model (${traficom.filtered} kpl): ${traficom.items.join(' | ')}`;
   }
 
-  const prompt = `You are an automotive expert. Analyse this Finnish car listing and respond with JSON only (no markdown).
+  const prompt = `You are an automotive expert. Analyse this Finnish car listing and respond with JSON only (no markdown). Write all user-facing JSON text in ${responseLanguage}.
 
 Use ALL available data: engine size, mileage, year, fuel type, CO2 emissions, consumption, transmission, and any other specs present. Factor high mileage, age, and specific engine variants into the reliability score.
 
@@ -349,9 +387,9 @@ ${car.context}
 Return exactly:
 {
   "reliabilityScore": <integer 1-5>,
-  "summary": "<3-5 sentences in Finnish: overall reliability verdict, how the mileage and age affect it, any concrete red flags in the seller description, and whether the price seems reasonable. Do not reference NHTSA, Traficom, or any data source names. Do not use em dashes (—).>",
-  "commonProblems": ["<Finnish, specific to this engine/gearbox variant>", ...],
-  "benefits": ["<Finnish>", ...],
+  "summary": "<3-5 sentences in ${responseLanguage}: overall reliability verdict, how the mileage and age affect it, any concrete red flags in the seller description, and whether the price seems reasonable. Do not reference NHTSA, Traficom, or any data source names. Do not use em dashes (—).>",
+  "commonProblems": ["<${responseLanguage}, specific to this engine/gearbox variant>", ...],
+  "benefits": ["<${responseLanguage}>", ...],
   "similarCars": ["<make model year-range>", "<make model year-range>", "<make model year-range>"]
 }`;
 
@@ -377,9 +415,9 @@ Return exactly:
 
     const json = await res.json();
     const data = JSON.parse(json.choices?.[0]?.message?.content || '{}');
-    renderPanel({ type: 'result', carTitle: car.title, data, nhtsa, traficom, regNumber });
+    renderPanel({ type: 'result', carTitle: car.title, data, nhtsa, traficom, regNumber, responseLanguage });
   } catch (e) {
-    renderPanel({ type: 'error', message: e.message });
+    renderPanel({ type: 'error', message: e.message, responseLanguage });
   }
 }
 
